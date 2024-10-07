@@ -1,4 +1,5 @@
 # Execução dos scripts do Capítulo 5:
+/Users/brunoramoslemos/www/python/cluster_spark/jobs   
 
 docker exec dsa-pyspark-master spark-submit --deploy-mode client ./apps/dsa-p2-00-teste-log.py
 

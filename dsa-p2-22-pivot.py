@@ -65,6 +65,40 @@ unPivotDF = pivotDF.select("Produto", expr(unpivotExpr)).where("Total is not nul
 # Exibe o DataFrame após a operação de unpivot
 unPivotDF.show(truncate=False)
 
+from pyspark.sql import Window
+from pyspark.sql import functions as F
+
+# Inicializa uma Spark session
+spark = SparkSession.builder.master("local").appName("telefone_colunas").getOrCreate()
+
+# Criação de um DataFrame de exemplo
+data = [
+    (1, 'João', '123456789'),
+    (1, 'João', '987654321'),
+    (1, 'João', '111111111'),
+    (2, 'Maria', '222222222'),
+    (2, 'Maria', '333333333'),
+]
+
+columns = ["cliente_id", "nome", "telefone"]
+
+# Cria o DataFrame
+df = spark.createDataFrame(data, columns)
+
+df.show()
+
+# Adiciona um índice para cada telefone do mesmo cliente usando row_number
+windowSpec = Window.partitionBy("cliente_id").orderBy("telefone")
+df = df.withColumn("telefone_index", F.row_number().over(windowSpec))
+
+# Transforma os telefones em colunas separadas usando pivot
+pivot_df = df.groupBy("cliente_id", "nome").pivot("telefone_index").agg(F.first("telefone"))
+
+# Renomeia as colunas dinamicamente
+pivot_df = pivot_df.select("cliente_id", "nome", *[F.col(str(i)).alias(f"telefone_{i}") for i in range(1, len(pivot_df))])
+
+# Mostra o resultado final
+pivot_df.show()
 
 
 
